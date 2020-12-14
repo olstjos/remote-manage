@@ -8,6 +8,7 @@ namespace RemoteManage;
 class Postgres
 {
     private $pgpassfile = null; // Path to .pgpass file
+    private   $nice = 'nice -n 10 ';
 
     public function __construct(){
         $this->pgpassfile = getenv('HOME') . '/.pgpass';
@@ -25,7 +26,7 @@ class Postgres
 
         // Dump database using tar format (-F t).
         try {
-            SysCmd::exec(sprintf('pg_dump -h %s -p %s -U %s -x -F t %s > %s 2>&1',
+            SysCmd::exec(sprintf($this->nice . 'pg_dump -h %s -p %s -U %s -x -F t %s > %s 2>&1',
                 $db['host'],
                 $db['port'],
                 $db['user'],
@@ -54,7 +55,7 @@ class Postgres
         $this->createPassFile($db);
 
         try {
-            SysCmd::exec(sprintf('pg_restore --no-privileges --no-owner -h %s -p %s -U %s -d %s -F t %s 2>&1',
+            SysCmd::exec(sprintf($this->nice . 'pg_restore --no-privileges --no-owner -h %s -p %s -U %s -d %s -F t %s 2>&1',
                 $db['host'],
                 $db['port'],
                 $db['user'],

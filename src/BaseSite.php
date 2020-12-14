@@ -41,6 +41,7 @@ abstract class BaseSite
     private   $backupDir = ['D' => 'daily', 'W' => 'weekly', 'M' => 'monthly'];
     private   $restoreArchive = null;    // S3 path of archive file (e.g. starts with daily/ ) as requested
     private   $restoreTarFile = null;    // Actual filename of the archive tar file
+    private   $nice = 'nice -n 10 ';
 
     /**
      * Initializing configuration settings.
@@ -169,7 +170,7 @@ abstract class BaseSite
             $backupDir = basename($volume);
             $backupFile = "$backupDir-backup.tar";
             try {
-                SysCmd::exec(sprintf(
+                SysCmd::exec($this->nice . sprintf(
                     'tar cf %s %s',
                     $this->cfg['tmpdir'] . '/' . $backupFile,
                     $backupDir
@@ -225,7 +226,7 @@ abstract class BaseSite
 
         // Create a tar file containing all the backup files
         try {
-            SysCmd::exec(sprintf('tar cf %s %s',
+            SysCmd::exec($this->nice . sprintf('tar cf %s %s',
                 $this->backupTarFile,
                 join(' ', $this->backupFiles)
             ), $this->cfg['tmpdir']);
@@ -237,7 +238,7 @@ abstract class BaseSite
 
         // Now gzip it up
         try {
-            SysCmd::exec(sprintf('gzip -f %s',
+            SysCmd::exec($this->nice . sprintf('gzip -f %s',
                 $this->backupTarFile
             ), $this->cfg['tmpdir']);
         }
@@ -460,7 +461,7 @@ abstract class BaseSite
     protected function unzipArchive()
     {
         try {
-            SysCmd::exec(sprintf('gunzip -f %s 2>&1',
+            SysCmd::exec($this->nice . sprintf('gunzip -f %s 2>&1',
                 $this->restoreTarFile
             ), $this->cfg['tmpdir']);
         }
@@ -472,7 +473,7 @@ abstract class BaseSite
         $this->restoreTarFile = preg_replace('/\.gz$/', '', $this->restoreTarFile);
 
         try {
-            SysCmd::exec(sprintf('tar xf %s',
+            SysCmd::exec($this->nice . sprintf('tar xf %s',
                 $this->restoreTarFile
             ), $this->cfg['tmpdir']);
         } catch (\Exception $e) {
@@ -524,7 +525,7 @@ abstract class BaseSite
             $backupFile = "$backupDir-backup.tar";
             try {
                 $cmd = sprintf('tar xf %s', $backupFile);
-                SysCmd::exec($cmd, $this->cfg['tmpdir']);
+                SysCmd::exec($this->nice . $cmd, $this->cfg['tmpdir']);
             }
             catch (\Exception $e) {
                 $this->cleanup();
@@ -533,7 +534,7 @@ abstract class BaseSite
 
             try {
                 $cmd = sprintf('rsync -a --delete --omit-dir-times --no-g --no-perms %s %s', $backupDir . '/', $volume . '/');
-                SysCmd::exec($cmd, $this->cfg['tmpdir']);
+                SysCmd::exec($this->nice . $cmd, $this->cfg['tmpdir']);
             }
             catch (\Exception $e) {
                 $this->cleanup();
